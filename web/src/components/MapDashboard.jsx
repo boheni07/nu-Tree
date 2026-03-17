@@ -6,7 +6,7 @@ import { fetchTrees } from '../services/api';
 import TreeDetailModal from './TreeDetailModal';
 
 // 실제 사용시에는 Mapbox 토큰이 필요함
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZHVtbXkiLCJhIjoiY2R1bW15In0.dummy'; 
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN; 
 
 function getMarkerColor(species) {
   switch (species?.toLowerCase()) {
@@ -17,6 +17,19 @@ function getMarkerColor(species) {
   }
 }
 
+// WKT POINT(lon lat) 파싱 유틸리티
+function parseWKTPoint(wkt) {
+  if (!wkt || typeof wkt !== 'string') return null;
+  const match = wkt.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+  if (match) {
+    return {
+      longitude: parseFloat(match[1]),
+      latitude: parseFloat(match[2])
+    };
+  }
+  return null;
+}
+
 const MapDashboard = () => {
   const [selectedTreeId, setSelectedTreeId] = useState(null);
 
@@ -25,6 +38,23 @@ const MapDashboard = () => {
     queryKey: ['trees'],
     queryFn: fetchTrees,
   });
+
+  // 토큰이 유효하지 않거나 없을 때 표시할 화면
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes('dummy')) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full bg-slate-800 text-white p-6 text-center">
+        <div className="text-6xl mb-4">🗺️</div>
+        <h2 className="text-2xl font-bold mb-2">Mapbox 토큰이 필요합니다</h2>
+        <p className="text-slate-400 mb-6 max-w-md">
+          지도를 표시하려면 유효한 Mapbox Access Token이 필요합니다.<br/>
+          <code>web/.env</code> 파일에 <code>VITE_MAPBOX_TOKEN</code>을 설정해주세요.
+        </p>
+        <div className="bg-slate-700 p-4 rounded-lg text-sm font-mono text-left">
+          VITE_MAPBOX_TOKEN=your_token_here
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full relative">
@@ -50,17 +80,17 @@ const MapDashboard = () => {
           mapboxAccessToken={MAPBOX_TOKEN}
         >
           {trees.map((tree) => {
-            // 임시 파싱 로직 (String -> JSON 변환이 필요한 경우 처리)
-            let lon = 126.9780 + (Math.random() - 0.5) * 0.1; // 테스트용 랜덤 좌표
-            let lat = 37.5665 + (Math.random() - 0.5) * 0.1;
-            
-            // 실제 구현 시에는 tree.geom 파싱 등의 로직 필요
+            // WKT 데이터 또는 기본 좌표 사용
+            const coords = parseWKTPoint(tree.geom) || {
+              longitude: 126.9780 + (Math.random() - 0.5) * 0.1,
+              latitude: 37.5665 + (Math.random() - 0.5) * 0.1
+            };
 
             return (
               <Marker
                 key={tree.tree_id}
-                longitude={lon}
-                latitude={lat}
+                longitude={coords.longitude}
+                latitude={coords.latitude}
                 anchor="bottom"
                 onClick={e => {
                   e.originalEvent.stopPropagation();
