@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vis.gl/react-google-maps": "^1.7.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -26,9 +27,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "lucide-react": "^0.577.0",
-    "mapbox-gl": "^3.20.0",
     "postcss": "^8.5.8",
-    "react-map-gl": "^7.1.6",
     "tailwindcss": "^3.4.19",
     "vite": "^8.0.0"
   }
